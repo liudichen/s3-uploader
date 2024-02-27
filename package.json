@@ -1,0 +1,49 @@
+{
+  "name": "@iimm/s3-uploader",
+  "version": "0.0.1",
+  "description": "s3-uploader react component",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "scripts": {
+    "dev": "father dev",
+    "build": "father build",
+    "build:deps": "father prebundle",
+    "prepublishOnly": "father doctor && npm run build"
+  },
+  "keywords": [
+    "react component",
+    "mui",
+    "s3-uploader"
+  ],
+  "authors": [
+    "liudichen@foxmail.com"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "compiled"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.59",
+    "@types/react-dom": "^18.2.19",
+    "@types/spark-md5": "^3.0.4",
+    "father": "^4.4.0",
+    "sass": "^1.71.1",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "@iimm/icons": "^1.1.0",
+    "@mui/material": "^5.15.11",
+    "@tabler/icons-react": "^2.47.0",
+    "ahooks": "^3.7.10",
+    "react-dropzone": "^14.2.3",
+    "spark-md5": "^3.0.2"
+  }
+}
