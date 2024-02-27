@@ -111,12 +111,19 @@ export const S3Uploader = (props: S3UploaderIProps) => {
     const newValue = [...(value || [])];
     if (task === "delete") {
       newValue.splice(i, 1);
-    } else {
-      if (newItem!.md5 && newValue.some((ele, index) => ele.md5 === newItem!.md5 && index !== i)) {
+    } else if (newItem?.md5) {
+      const index = newValue.findIndex(
+        (ele) => ele.md5 === newItem.md5 || (newItem.file.name === ele.file.name && newItem.file.size === ele.file.size)
+      );
+      if (index === -1) {
+        return;
+      } else if (newValue.some((ele, index) => ele.md5 === newItem.md5 && index !== i)) {
         newValue.splice(i, 1);
       } else {
-        newValue[i] = newItem!;
+        newValue[i] = newItem;
       }
+    } else {
+      return;
     }
     setValue(newValue);
   });
@@ -148,7 +155,7 @@ export const S3Uploader = (props: S3UploaderIProps) => {
         <UploadItem
           i={i}
           item={item}
-          key={item?.md5 || `${i}-${item.file.name}`}
+          key={item?.md5 || `${item.file.name}-${item.file.size}`}
           onItemChange={onItemChange}
           uploader={uploader}
           uploaderName={uploaderName}
