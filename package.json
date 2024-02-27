@@ -35,12 +35,12 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
+    "@mui/material": "^5.15.11",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
   "dependencies": {
     "@iimm/icons": "^1.1.0",
-    "@mui/material": "^5.15.11",
     "@tabler/icons-react": "^2.47.0",
     "ahooks": "^3.7.10",
     "react-dropzone": "^14.2.3",
