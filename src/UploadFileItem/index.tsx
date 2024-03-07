@@ -1,11 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useLatest, useMemoizedFn, useSafeState, useUpdate } from "ahooks";
 import { Box, CircularProgress, IconButton, LinearProgress, Stack, Typography } from "@mui/material";
-import { IconChecks, IconCloudUpload, IconLockSearch, IconPlayerPause, IconPrescription } from "@tabler/icons-react";
+import {
+  IconChecks,
+  IconCloudUpload,
+  IconLockSearch,
+  IconPlayerPause,
+  IconPrescription,
+  IconTrash,
+} from "@tabler/icons-react";
 
 import { antdColor } from "../constants";
 import type { FileUploadStep, S3PreUploadPart, UploadFileItemProps } from "../interface";
-import { IconTrash } from "@tabler/icons-react";
 
 const chunkSize = 5 * 1024 * 1024;
 
@@ -38,7 +44,10 @@ export const UploadFileItem = ({
   timeout,
 }: UploadFileItemProps) => {
   const md5AbortRef = useRef(false);
+  /**是否全部完成 */
   const doneRef = useRef(false);
+  /**有任务正在执行 */
+  const doingRef = useRef(false);
   const [pause, setPause] = useSafeState(false);
   const pauseRef = useRef(false);
   const md5ProgressRef = useRef(0);
@@ -80,13 +89,15 @@ export const UploadFileItem = ({
 
   const removeFile = useMemoizedFn(() => {
     md5AbortRef.current = true;
+    doingRef.current = false;
     pauseSwitch(true);
     onItemChange(i, "delete");
   });
 
   const computeMd5 = useMemoizedFn(async () => {
-    if (readOnly || (item.err && item.errType === "validate") || item.md5 || !item.file) return;
+    if (readOnly || doingRef.current || (item.err && item.errType === "validate") || item.md5 || !item.file) return;
 
+    doingRef.current = true;
     const md5 = await md5Getter!(item.file, {
       abortRef: md5AbortRef,
       onprogress: (x) => {
@@ -95,6 +106,7 @@ export const UploadFileItem = ({
       },
     });
 
+    doneRef.current = false;
     if (md5 === false) {
       onItemChange(i, "update", { ...item, err: "计算文件校验和失败", errType: "md5" });
     } else if (typeof md5 === "string") {
@@ -107,6 +119,7 @@ export const UploadFileItem = ({
       return;
     }
     try {
+      doingRef.current = true;
       const res = await s3PreUploadRequest!(
         s3PreUploadUrl,
         {
@@ -124,8 +137,10 @@ export const UploadFileItem = ({
       if (!res.done) {
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
       }
+      doingRef.current = false;
       onItemChange(i, "update", { ...item, ...res, err: "", errType: undefined });
     } catch (error) {
+      doingRef.current = false;
       console.log(`${item.name}-preUploadErr`, error);
       onItemChange(i, "update", { ...item, err: "上传初始化失败", errType: "preUpload" });
     }
@@ -136,7 +151,7 @@ export const UploadFileItem = ({
 
     const allDone = partsRef.current.every((ele) => ele.done);
     if (!allDone) return;
-
+    doingRef.current = false;
     try {
       const result = await s3CompleteUploadRequest!(
         s3CompleteUploadUrl,
@@ -165,6 +180,7 @@ export const UploadFileItem = ({
   const partsUpload = useMemoizedFn(async () => {
     if (
       readOnly ||
+      doingRef.current ||
       stepRef.current !== "上传中" ||
       uploadFailRef.current ||
       item.errType === "partUpload" ||
@@ -177,6 +193,7 @@ export const UploadFileItem = ({
     if (partsRef.current.every((ele) => ele.done)) {
       await checkAndCompleteUpload();
     } else {
+      doingRef.current = true;
       for (let i = 0; i < partsRef.current.length; i++) {
         if (uploadFailRef.current || !partsRef.current.length) break;
 
@@ -321,13 +338,13 @@ export const UploadFileItem = ({
                   border: item.err ? `2px solid ${antdColor.error}` : undefined,
                 }}
               >
-                <IconLockSearch color={antdColor.blue3} />
+                <IconLockSearch color={item.err ? antdColor.warning : antdColor.blue3} />
               </IconButton>
               {!item.err && (
                 <CircularProgress
                   size={36}
                   sx={{
-                    color: antdColor.cyan,
+                    color: antdColor.blue3,
                     position: "absolute",
                     top: "50%",
                     left: "50%",
@@ -347,7 +364,7 @@ export const UploadFileItem = ({
                 title={`上传初始化中,初始化上传任务...${item.err ? `(Error-${item.err})` : ""}`}
                 sx={{ zIndex: 100, p: 0.25 }}
               >
-                <IconPrescription color={item.errType === "preUpload" ? antdColor.error : antdColor.cyan} />
+                <IconPrescription color={item.errType === "preUpload" ? antdColor.warning : antdColor.cyan} />
               </IconButton>
               {!item.err && (
                 <CircularProgress
@@ -375,7 +392,11 @@ export const UploadFileItem = ({
                 onClick={pauseSwitch}
                 sx={{ zIndex: 100, p: 0.25 }}
               >
-                {pause ? <IconPlayerPause color={antdColor.warning} /> : <IconCloudUpload color={antdColor.primary} />}
+                {pause ? (
+                  <IconPlayerPause color={antdColor.warning} />
+                ) : (
+                  <IconCloudUpload color={item.errType === "partUpload" ? antdColor.warning : antdColor.primary} />
+                )}
               </IconButton>{" "}
               {!uploadFailRef.current && !pause && (
                 <CircularProgress
