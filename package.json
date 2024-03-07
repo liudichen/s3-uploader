@@ -27,12 +27,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/react": "^18.2.59",
-    "@types/react-dom": "^18.2.19",
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
     "@types/spark-md5": "^3.0.4",
     "father": "^4.4.0",
-    "sass": "^1.71.1",
-    "typescript": "^5.3.3"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.4.2"
   },
   "peerDependencies": {
     "@mui/material": "^5.15.11",
@@ -43,6 +44,7 @@
     "@iimm/icons": "^1.1.0",
     "@tabler/icons-react": "^2.47.0",
     "ahooks": "^3.7.10",
+    "axios": "^1.6.7",
     "react-dropzone": "^14.2.3",
     "spark-md5": "^3.0.2"
   }

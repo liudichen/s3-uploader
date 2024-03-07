@@ -1,108 +1,108 @@
-import { type ComponentType, type ReactNode } from "react";
 import { useControllableValue, useMemoizedFn } from "ahooks";
-import { Stack, SxProps } from "@mui/material";
-import { type DropzoneOptions } from "react-dropzone";
+import { Stack } from "@mui/material";
+import { DropzoneOptions } from "react-dropzone";
 
-import { antdColor } from "./constants";
-import { isSameFile } from "./utils";
+import {
+  antdColor,
+  fileIconRenderFn,
+  isSameFileFn,
+  md5GetterFn,
+  s3AbortUploadRequestFn,
+  s3CompleteUploadRequestFn,
+  s3PartUploadRequestFn,
+  s3PreUploadRequestFn,
+} from "./constants";
 import { UploadZone } from "./UploadZone";
-import { UploadItem } from "./UploadItem";
-import { Trigger } from "./Trigger";
-import type { OnItemChangeFn, UploadFile, UrlConvertFn } from "./interface";
-
-export interface S3UploaderIProps {
-  value?: UploadFile[];
-  onChange?: (v: UploadFile[]) => void;
-  defaultValue?: UploadFile[];
-
-  className?: string;
-  s3PreUploadUrl: string;
-  s3CompleteUploadUrl: string;
-  s3AbortUploadUrl?: string;
-  getFileIcon: (fileName: string, mimeType?: string) => ComponentType<{ size?: number }>;
-  uploadZoneClassName?: string;
-  uploadItemClassName?: string;
-
-  meta?: Record<string, number | string>;
-  uploader?: string;
-  uploaderName?: string;
-  error?: boolean;
-  /**分片上传并发数量限制 */
-  limit?: number;
-  /**分片上传后端返回的url的转换函数 */
-  partUrlConvert?: UrlConvertFn;
-  /**达到并发限制时,等待多少ms再次进行检查是否达到并发数量限制 */
-  chunkWaitTime?: number;
-  /**触发DropZone的元素节点 */
-  dropZoneTrigger?: ReactNode;
-  dropZoneSx?: SxProps;
-  accept?: DropzoneOptions["accept"];
-  minSize?: number;
-  maxSize?: number;
-  maxFiles?: number;
-  preventDropOnDocument?: boolean;
-  noClick?: boolean;
-  noKeyboard?: boolean;
-  noDrag?: boolean;
-  noDragEventsBubbling?: boolean;
-  useFsAccessApi?: boolean;
-  autoFocus?: boolean;
-}
+import { UploadFileItem } from "./UploadFileItem";
+import type { OnItemChangeFn, S3UploaderIProps, UploadFile } from "./interface";
 
 export const S3Uploader = (props: S3UploaderIProps) => {
   const {
+    value: valueProp,
+    onChange,
+    defaultValue,
     meta,
     uploader,
     uploaderName,
     limit = 3,
-    partUrlConvert,
     chunkWaitTime = 1000,
-    dropZoneTrigger,
-    maxFiles,
+    fileChecker,
+    fileIconRender = fileIconRenderFn,
+    disabled,
     dropZoneSx,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    value: valueProp,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onChange: onChagneProp,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    defaultValue: defaultValueProp,
-    s3CompleteUploadUrl,
-    s3PreUploadUrl,
-    s3AbortUploadUrl,
-    getFileIcon,
+    dropZoneTrigger,
     uploadItemClassName,
     uploadZoneClassName,
     className,
+    s3AbortUploadRequest = s3AbortUploadRequestFn,
+    s3CompleteUploadRequest = s3CompleteUploadRequestFn,
+    s3PartUploadRequest = s3PartUploadRequestFn,
+    s3PreUploadRequest = s3PreUploadRequestFn,
+    s3CompleteUploadUrl,
+    s3PreUploadUrl,
+    s3AbortUploadUrl,
+    urlConvert,
+    maxFiles,
+    error,
+    readOnly: readOnlyProp,
+    onDropAccepted: onDropAcceptedProp,
+    isSameFile = isSameFileFn,
+    md5Getter = md5GetterFn,
+    baseURL,
+    timeout,
     ...restProps
   } = props;
+
+  const readOnly = !!readOnlyProp || !!disabled;
   const [value, setValue] = useControllableValue<UploadFile[]>(props, { defaultValue: [] });
 
-  const readOnly = false;
-
-  const onDropAccepted: DropzoneOptions["onDropAccepted"] = useMemoizedFn((acceptedFiles) => {
+  const onDropAccepted: DropzoneOptions["onDropAccepted"] = useMemoizedFn(async (acceptFiles: File[], e) => {
     if (readOnly) return;
     const rawFiles = value || [];
-    const rawN = rawFiles?.length || 0;
-    if (!acceptedFiles?.length || (!!maxFiles && rawN >= maxFiles)) return;
+    const rawCount = rawFiles?.length || 0;
+
+    if (!acceptFiles?.length || (!!maxFiles && rawCount >= maxFiles)) {
+      return;
+    }
+
+    const candidateFiles = onDropAcceptedProp ? await onDropAcceptedProp(acceptFiles, e) : acceptFiles;
+
+    if (!candidateFiles?.length) return;
+
     const newFiles: UploadFile[] = [];
-    for (let i = 0; i < acceptedFiles.length; i++) {
-      if (!!maxFiles && newFiles.length + rawN >= maxFiles) {
-        break;
+
+    for (let i = 0; i < candidateFiles.length; i++) {
+      const file = candidateFiles[i];
+      if (isSameFile) {
+        if (
+          rawFiles?.some((ele) => isSameFile(file, ele?.file)) ||
+          newFiles.some((ele) => isSameFile(file, ele.file!))
+        ) {
+          continue;
+        }
       }
-      const file = acceptedFiles[i];
-      if (rawFiles?.some((ele) => isSameFile(ele.file, file)) || newFiles.some((ele) => isSameFile(ele.file, file))) {
-        continue;
+
+      const item: UploadFile = { file, size: file.size, name: file.name, type: file.type };
+
+      if (fileChecker) {
+        const checkResultErrMsg = await fileChecker(file);
+        if (checkResultErrMsg) {
+          item.err = checkResultErrMsg;
+          item.errType = "validate";
+        }
       }
-      const item: UploadFile = {
-        file,
-        size: file.size,
-      };
 
       newFiles.push(item);
+
+      if (!!maxFiles && rawCount + newFiles.length >= maxFiles) {
+        break;
+      }
     }
+
     if (!newFiles.length) return;
+
     const newValue = [...(rawFiles || [])];
-    newValue.push(...(maxFiles ? newFiles.slice(0, maxFiles - rawN) : newFiles));
+    newValue.push(...(maxFiles ? newFiles.slice(0, maxFiles - rawCount) : newFiles));
 
     setValue(newValue);
   });
@@ -113,17 +113,16 @@ export const S3Uploader = (props: S3UploaderIProps) => {
       newValue.splice(i, 1);
     } else if (newItem?.md5) {
       const index = newValue.findIndex(
-        (ele) => ele.md5 === newItem.md5 || (newItem.file.name === ele.file.name && newItem.file.size === ele.file.size)
+        (ele) => ele.md5 === newItem.md5 || (newItem.name === ele.name && newItem.size === ele.size)
       );
-      if (index === -1) {
-        return;
-      } else if (newValue.some((ele, index) => ele.md5 === newItem.md5 && index !== i)) {
+      if (index === -1) return;
+      if (newValue.some((ele, index) => ele.md5 === newItem.md5 && index !== i)) {
         newValue.splice(i, 1);
       } else {
         newValue[i] = newItem;
       }
     } else {
-      return;
+      newValue[i] = newItem!;
     }
     setValue(newValue);
   });
@@ -132,42 +131,43 @@ export const S3Uploader = (props: S3UploaderIProps) => {
     <Stack
       spacing={0.5}
       direction="column"
-      sx={{
-        width: "100%",
-        border: `1px solid ${antdColor.gray4}`,
-        p: 0.25,
-        borderRadius: 1,
-      }}
+      sx={{ width: "100%", border: `1px solid ${antdColor.gray4}`, p: 0.25, borderRadius: 1 }}
       className={className}
     >
       {!readOnly && (!maxFiles || maxFiles > (value?.length || 0)) && (
         <UploadZone
           multiple={maxFiles !== 1}
-          onDropAccepted={onDropAccepted}
           maxFiles={maxFiles}
+          disabled={readOnly}
+          onDropAccepted={onDropAccepted}
           {...restProps}
           className={uploadZoneClassName}
-        >
-          {dropZoneTrigger || <Trigger />}
-        </UploadZone>
+        />
       )}
       {value?.map((item, i) => (
-        <UploadItem
+        <UploadFileItem
+          key={item.md5 || `${item.name}-${item.size}`}
           i={i}
           item={item}
-          key={item?.md5 || `${item.file.name}-${item.file.size}`}
+          limit={limit}
           onItemChange={onItemChange}
+          readOnly={readOnly}
+          meta={meta}
           uploader={uploader}
           uploaderName={uploaderName}
-          meta={meta}
-          readOnly={readOnly}
-          limit={limit}
-          partUrlConvert={partUrlConvert}
           chunkWaitTime={chunkWaitTime}
-          s3CompleteUploadUrl={s3CompleteUploadUrl}
+          s3PreUploadRequest={s3PreUploadRequest}
           s3PreUploadUrl={s3PreUploadUrl}
+          s3PartUploadRequest={s3PartUploadRequest}
+          s3CompleteUploadRequest={s3CompleteUploadRequest}
+          s3CompleteUploadUrl={s3CompleteUploadUrl}
+          s3AbortUploadRequest={s3AbortUploadRequest}
           s3AbortUploadUrl={s3AbortUploadUrl}
-          getFileIcon={getFileIcon}
+          md5Getter={md5Getter}
+          urlConvert={urlConvert}
+          fileIconRender={fileIconRender}
+          baseURL={baseURL}
+          timeout={timeout}
           className={uploadItemClassName}
         />
       ))}
