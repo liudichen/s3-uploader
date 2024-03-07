@@ -5,6 +5,7 @@ import { IconChecks, IconCloudUpload, IconLockSearch, IconPlayerPause, IconPresc
 
 import { antdColor } from "../constants";
 import type { FileUploadStep, S3PreUploadPart, UploadFileItemProps } from "../interface";
+import { IconTrash } from "@tabler/icons-react";
 
 const chunkSize = 5 * 1024 * 1024;
 
@@ -75,6 +76,12 @@ export const UploadFileItem = ({
       pauseRef.current = newPause;
       setPause(newPause);
     }
+  });
+
+  const removeFile = useMemoizedFn(() => {
+    md5AbortRef.current = true;
+    pauseSwitch(true);
+    onItemChange(i, "delete");
   });
 
   const computeMd5 = useMemoizedFn(async () => {
@@ -245,7 +252,7 @@ export const UploadFileItem = ({
       className={className}
     >
       <Box sx={{ mx: 0.25 }} className="s3-uploader-item-icon">
-        {fileIconRender(item)}
+        {fileIconRender!(item)}
       </Box>
       <Box sx={{ px: 0.25, width: "100%", overflow: "hidden" }} className="s3-uploader-item-content">
         <Box
@@ -386,6 +393,9 @@ export const UploadFileItem = ({
               )}
             </Box>
           )}
+          <IconButton title="移除" onClick={removeFile} sx={{ zIndex: 100 }}>
+            <IconTrash color={antdColor.error} />
+          </IconButton>
         </Stack>
       )}
     </Box>

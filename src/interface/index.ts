@@ -106,7 +106,9 @@ export type S3AbortUploadRequestFn = (
   options?: RequestionOptions
 ) => Promise<true>;
 
-export interface S3UploaderIProps extends Omit<DropzoneOptions, "onDropAccepted">, S3RelateItemProps {
+export interface S3UploaderIProps
+  extends Partial<Omit<DropzoneOptions, "onDropAccepted" | "multiple">>,
+    S3RelateItemProps {
   value?: UploadFile[];
   onChange?: (v: UploadFile[]) => void;
   defaultValue?: UploadFile[];
@@ -114,12 +116,11 @@ export interface S3UploaderIProps extends Omit<DropzoneOptions, "onDropAccepted"
   readOnly?: boolean;
 
   /**返回候选可以上传的文件数组 */
-  onDropAccepted:
+  onDropAccepted?:
     | (<T extends File>(files: T[], event: DropEvent) => Promise<File[]>)
     | (<T extends File>(files: T[], event: DropEvent) => File[]);
 
   className?: string;
-  getFileIcon: (fileName: string, mimeType?: string) => ComponentType<{ size?: number }>;
   uploadZoneClassName?: string;
   uploadItemClassName?: string;
 
@@ -165,7 +166,7 @@ interface S3RelateItemProps {
   baseURL?: string;
   timeout?: number;
 
-  fileIconRender: FileIconRender;
+  fileIconRender?: FileIconRender;
 
   /**分片上传并发数量限制 */
   limit?: number;
