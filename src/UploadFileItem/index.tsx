@@ -74,7 +74,7 @@ export const UploadFileItem = ({
   const uploadingPartsRef = useRef<(S3PreUploadPart & UploadPartTempFields)[]>([]);
   const forceUpdate = useUpdate();
   const uploadFailRef = useRef(false);
-  const [step, setStep] = useSafeState<FileUploadStep>(!item.md5 ? "md5计算" : "文件校验");
+  const [step, setStep] = useSafeState<FileUploadStep>(!item.md5 ? "md5计算" : item.done ? "完成" : "文件校验");
 
   const stepRef = useLatest(step);
 
