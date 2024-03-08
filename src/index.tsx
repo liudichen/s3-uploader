@@ -50,6 +50,10 @@ export const S3Uploader = (props: S3UploaderIProps) => {
     md5Getter = md5GetterFn,
     baseURL,
     timeout,
+    platform,
+    app,
+    filePrefix,
+    bucket,
     ...restProps
   } = props;
 
@@ -169,6 +173,10 @@ export const S3Uploader = (props: S3UploaderIProps) => {
           baseURL={baseURL}
           timeout={timeout}
           className={uploadItemClassName}
+          platform={platform}
+          app={app}
+          bucket={bucket}
+          filePrefix={filePrefix}
         />
       ))}
     </Stack>

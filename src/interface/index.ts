@@ -4,10 +4,16 @@ import type { AxiosDefaults, AxiosRequestConfig } from "axios";
 import type { DropEvent, DropzoneOptions } from "react-dropzone";
 
 export interface S3PreUploadData {
+  /** 上传文件来源平台*/
+  platform: string;
+  /** 平台上的某一应用 */
+  app?: string;
+  /**手动指定桶名,实际并不一定会使用（如果其它桶中已上传的情况下） */
+  bucket?: string;
   md5: string;
   fileName: string;
   fileType?: string;
-  /**手动指定存储路径 */
+  /**手动指定在桶中的存储路径 */
   prefix?: string;
   size: number;
   uploader?: string;
@@ -152,6 +158,14 @@ export type FileIconRender = (file: UploadFile) => ReactNode;
 export type IsSameFileFn = (a: File, b?: File) => boolean;
 
 interface S3RelateItemProps {
+  /** 上传文件来源平台*/
+  platform: string;
+  /** 平台上的某一应用 */
+  app?: string;
+  /**手动指定桶名,实际并不一定会使用（如果其它桶中已上传的情况下） */
+  bucket?: string;
+  /**文件在桶中的存储路径 */
+  filePrefix?: string;
   s3PreUploadUrl: string;
   s3CompleteUploadUrl: string;
   s3AbortUploadUrl?: string;

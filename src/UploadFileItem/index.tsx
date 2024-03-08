@@ -36,6 +36,10 @@ export const UploadFileItem = ({
   md5Getter,
   baseURL,
   timeout,
+  platform,
+  app,
+  bucket,
+  filePrefix,
 }: UploadFileItemProps) => {
   const md5AbortRef = useRef(false);
   const doneRef = useRef(false);
@@ -47,13 +51,7 @@ export const UploadFileItem = ({
   const forceUpdate = useUpdate();
   const uploadFailRef = useRef(false);
 
-  const step: FileUploadStep = !item?.md5
-    ? "md5计算"
-    : !item?.uploadId
-    ? "初始化"
-    : item?.done || doneRef.current
-    ? "完成"
-    : "上传中";
+  const step: FileUploadStep = !item?.md5 ? "md5计算" : !item?.uploadId ? "初始化" : item?.done ? "完成" : "上传中";
 
   const stepRef = useLatest(step);
 
@@ -117,6 +115,10 @@ export const UploadFileItem = ({
           meta,
           uploader,
           uploaderName,
+          platform,
+          app,
+          bucket,
+          prefix: filePrefix,
         },
         { baseURL, timeout, urlConvert }
       );
