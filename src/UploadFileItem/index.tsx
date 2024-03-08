@@ -64,7 +64,7 @@ export const UploadFileItem = ({
 }: UploadFileItemProps) => {
   const md5AbortRef = useRef(false);
   /**是否全部完成 */
-  const doneRef = useRef(false);
+  const doneRef = useRef(item.done);
   /**有任务正在执行 */
   const doingRef = useRef(false);
   const [pause, setPause] = useSafeState(false);
