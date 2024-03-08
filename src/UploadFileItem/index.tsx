@@ -154,13 +154,14 @@ export const UploadFileItem = ({
       );
       doneRef.current = res.done;
 
-      if (!res.done) {
-        partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
-      }
-
       doingRef.current = false;
       onItemChange(i, "update", { ...item, ...res, err: "", errType: undefined });
-      setStep("上传中");
+      if (!res.done) {
+        partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
+        setStep("上传中");
+      } else {
+        setStep("完成");
+      }
     } catch (error) {
       doingRef.current = false;
       console.log(`${item.name}-preUploadErr`, error);
