@@ -127,8 +127,8 @@ export type OnItemChangeFn = (
 
 export type UrlConvertFn = (
   url: string,
-  type: "request" | "response",
-  task: "preUpload" | "partUpload" | "completeUpload" | "abortUpload"
+  type?: "request" | "response",
+  task?: "preUpload" | "partUpload" | "completeUpload" | "abortUpload"
 ) => string;
 
 interface RequestionOptions extends Omit<AxiosRequestConfig, "data" | "url"> {
@@ -265,7 +265,9 @@ interface S3RelateItemProps {
   /** 渲染文档图标的组件,可选,有内置的默认组件*/
   FileIconRender?: ComponentType<FileIconRenderProps>;
 
-  /**分片上传并发数量限制 */
+  /**分片上传并发数量限制
+   * @default 3
+   */
   limit?: number;
   /**分片上传后端返回的url的转换函数 */
   urlConvert?: UrlConvertFn;
