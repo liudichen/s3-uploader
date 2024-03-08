@@ -203,3 +203,5 @@ export const S3Uploader = (props: S3UploaderProps) => {
     </Stack>
   );
 };
+
+export * from "./interface";
