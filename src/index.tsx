@@ -1,10 +1,9 @@
 import { useControllableValue, useMemoizedFn } from "ahooks";
 import { Stack } from "@mui/material";
-import { DropzoneOptions } from "react-dropzone";
+import type { DropzoneOptions } from "react-dropzone";
 
 import {
   antdColor,
-  fileIconRenderFn,
   isSameFileFn,
   md5GetterFn,
   s3AbortUploadRequestFn,
@@ -14,9 +13,11 @@ import {
 } from "./constants";
 import { UploadZone } from "./UploadZone";
 import { UploadFileItem } from "./UploadFileItem";
-import type { OnItemChangeFn, S3UploaderIProps, UploadFile } from "./interface";
+import type { OnItemChangeFn, S3UploaderProps, UploadFile } from "./interface";
+import { Trigger } from "./Trigger";
+import { InnerFileIconRender } from "./components";
 
-export const S3Uploader = (props: S3UploaderIProps) => {
+export const S3Uploader = (props: S3UploaderProps) => {
   const {
     value: valueProp,
     onChange,
@@ -27,10 +28,9 @@ export const S3Uploader = (props: S3UploaderIProps) => {
     limit = 3,
     chunkWaitTime = 1000,
     fileChecker,
-    fileIconRender = fileIconRenderFn,
+    FileIconRender = InnerFileIconRender,
     disabled,
-    dropZoneSx,
-    dropZoneTrigger,
+    dropZoneTrigger = <Trigger />,
     uploadItemClassName,
     uploadZoneClassName,
     className,
@@ -49,11 +49,15 @@ export const S3Uploader = (props: S3UploaderIProps) => {
     isSameFile = isSameFileFn,
     md5Getter = md5GetterFn,
     baseURL,
-    timeout,
+    timeout = 15000,
     platform,
     app,
     filePrefix,
     bucket,
+    selectType,
+    selectable,
+    preview,
+    PreviewRender,
     ...restProps
   } = props;
 
@@ -86,7 +90,7 @@ export const S3Uploader = (props: S3UploaderIProps) => {
         }
       }
 
-      const item: UploadFile = { file, size: file.size, name: file.name, type: file.type };
+      const item: UploadFile = { file, size: file.size, name: file.name, type: file.type, checked: false };
 
       if (fileChecker) {
         const checkResultErrMsg = await fileChecker(file);
@@ -115,6 +119,17 @@ export const S3Uploader = (props: S3UploaderIProps) => {
     const newValue = [...(value || [])];
     if (task === "delete") {
       newValue.splice(i, 1);
+    } else if (task === "select") {
+      const checked = !newValue[i].checked;
+      newValue[i].checked = checked;
+      if (selectType === "single" && checked) {
+        newValue.map((_, index) => {
+          if (index !== i) {
+            newValue[index].checked = false;
+          }
+          return null;
+        });
+      }
     } else if (newItem?.md5) {
       const index = newValue.findIndex(
         (ele) => ele.md5 === newItem.md5 || (newItem.name === ele.name && newItem.size === ele.size)
@@ -146,11 +161,13 @@ export const S3Uploader = (props: S3UploaderIProps) => {
           onDropAccepted={onDropAccepted}
           {...restProps}
           className={uploadZoneClassName}
-        />
+        >
+          {dropZoneTrigger}
+        </UploadZone>
       )}
       {value?.map((item, i) => (
         <UploadFileItem
-          key={item.md5 || `${item.name}-${item.size}`}
+          key={`${item.name}-${item.size}`}
           i={i}
           item={item}
           limit={limit}
@@ -169,7 +186,7 @@ export const S3Uploader = (props: S3UploaderIProps) => {
           s3AbortUploadUrl={s3AbortUploadUrl}
           md5Getter={md5Getter}
           urlConvert={urlConvert}
-          fileIconRender={fileIconRender}
+          FileIconRender={FileIconRender}
           baseURL={baseURL}
           timeout={timeout}
           className={uploadItemClassName}
@@ -177,6 +194,10 @@ export const S3Uploader = (props: S3UploaderIProps) => {
           app={app}
           bucket={bucket}
           filePrefix={filePrefix}
+          selectType={selectType}
+          selectable={selectable}
+          preview={preview}
+          PreviewRender={PreviewRender}
         />
       ))}
     </Stack>

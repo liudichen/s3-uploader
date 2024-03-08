@@ -1,16 +1,28 @@
 import { useEffect, useRef } from "react";
 import { useLatest, useMemoizedFn, useSafeState, useUpdate } from "ahooks";
-import { Box, CircularProgress, IconButton, LinearProgress, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Checkbox,
+  CircularProgress,
+  FormControlLabel,
+  IconButton,
+  LinearProgress,
+  Stack,
+  Typography,
+} from "@mui/material";
 import {
   IconChecks,
   IconCloudUpload,
+  IconFileZip,
   IconLockSearch,
+  IconMinus,
   IconPlayerPause,
   IconPrescription,
   IconTrash,
 } from "@tabler/icons-react";
 
 import { antdColor } from "../constants";
+import { InnerFileIconRender } from "../components";
 import type { FileUploadStep, S3PreUploadPart, UploadFileItemProps } from "../interface";
 
 const chunkSize = 5 * 1024 * 1024;
@@ -38,7 +50,7 @@ export const UploadFileItem = ({
   s3CompleteUploadUrl,
   s3PreUploadUrl,
   urlConvert,
-  fileIconRender,
+  FileIconRender = InnerFileIconRender,
   md5Getter,
   baseURL,
   timeout,
@@ -46,6 +58,9 @@ export const UploadFileItem = ({
   app,
   bucket,
   filePrefix,
+  selectable,
+  preview,
+  PreviewRender,
 }: UploadFileItemProps) => {
   const md5AbortRef = useRef(false);
   /**是否全部完成 */
@@ -59,8 +74,7 @@ export const UploadFileItem = ({
   const uploadingPartsRef = useRef<(S3PreUploadPart & UploadPartTempFields)[]>([]);
   const forceUpdate = useUpdate();
   const uploadFailRef = useRef(false);
-
-  const step: FileUploadStep = !item?.md5 ? "md5计算" : !item?.uploadId ? "初始化" : item?.done ? "完成" : "上传中";
+  const [step, setStep] = useSafeState<FileUploadStep>(!item.md5 ? "md5计算" : "文件校验");
 
   const stepRef = useLatest(step);
 
@@ -96,6 +110,7 @@ export const UploadFileItem = ({
     if (readOnly || doingRef.current || (item.err && item.errType === "validate") || item.md5 || !item.file) return;
 
     doingRef.current = true;
+
     const md5 = await md5Getter!(item.file, {
       abortRef: md5AbortRef,
       onprogress: (x) => {
@@ -109,6 +124,7 @@ export const UploadFileItem = ({
       onItemChange(i, "update", { ...item, err: "计算文件校验和失败", errType: "md5" });
     } else if (typeof md5 === "string") {
       onItemChange(i, "update", { ...item, md5, err: "", errType: undefined });
+      setStep("初始化");
     }
   });
 
@@ -116,6 +132,7 @@ export const UploadFileItem = ({
     if (readOnly || item.uploadId) {
       return;
     }
+
     try {
       doingRef.current = true;
       const res = await s3PreUploadRequest!(
@@ -136,11 +153,14 @@ export const UploadFileItem = ({
         { baseURL, timeout, urlConvert }
       );
       doneRef.current = res.done;
+
       if (!res.done) {
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
       }
+
       doingRef.current = false;
       onItemChange(i, "update", { ...item, ...res, err: "", errType: undefined });
+      setStep("上传中");
     } catch (error) {
       doingRef.current = false;
       console.log(`${item.name}-preUploadErr`, error);
@@ -152,8 +172,18 @@ export const UploadFileItem = ({
     if (item?.done || !partsRef.current?.length || doneRef.current) return;
 
     const allDone = partsRef.current.every((ele) => ele.done);
+
     if (!allDone) return;
     doingRef.current = false;
+    setStep("文件合并");
+  });
+
+  const completeUpload = useMemoizedFn(async () => {
+    if (readOnly) return;
+
+    const allDone = partsRef.current.every((ele) => ele.done);
+    if (!allDone) return;
+
     try {
       const result = await s3CompleteUploadRequest!(
         s3CompleteUploadUrl,
@@ -165,12 +195,14 @@ export const UploadFileItem = ({
         { timeout, baseURL, urlConvert }
       );
       doneRef.current = true;
-      const newItem = { ...item, done: true, url: result.url };
+      const newItem = { ...item, ...(result || {}), done: true };
       delete newItem.parts;
       delete newItem.err;
       delete newItem.errType;
       partsRef.current = [];
       uploadingPartsRef.current = [];
+      onItemChange(i, "update", newItem);
+      setStep("完成");
     } catch (error) {
       console.log("completeUploadErr", error);
       const err = "上传后文件合并出错";
@@ -257,21 +289,38 @@ export const UploadFileItem = ({
       computeMd5();
     } else if (step === "初始化") {
       preUpload();
-    } else if (step === "上传中" && !doneRef.current) {
+    } else if (step === "上传中") {
       partsUpload();
+    } else if (step === "文件合并") {
+      completeUpload();
     }
-  }, [step, pause]);
+  }, [step]);
 
   return (
     <Box
       display="flex"
       flexDirection="row"
       alignItems="center"
-      sx={{ borderRadius: 2, border: `1px solid ${antdColor.gray5}` }}
+      sx={{ borderRadius: 2, border: `1px solid ${error ? antdColor.error : antdColor.gray5}` }}
       className={className}
     >
+      <FormControlLabel
+        sx={{ mr: 0.5, ml: 0 }}
+        control={
+          !selectable ? (
+            <></>
+          ) : (
+            <Checkbox
+              disabled={readOnly || !item.done}
+              checked={item.checked}
+              onChange={() => onItemChange(i, "select")}
+            />
+          )
+        }
+        label={`${i + 1}.`}
+      />
       <Box sx={{ mx: 0.25 }} className="s3-uploader-item-icon">
-        {fileIconRender!(item)}
+        <FileIconRender item={item} preview={preview} PreviewRender={PreviewRender} />
       </Box>
       <Box sx={{ px: 0.25, width: "100%", overflow: "hidden" }} className="s3-uploader-item-content">
         <Box
@@ -282,7 +331,7 @@ export const UploadFileItem = ({
             {item.name}
           </Typography>
         </Box>
-        {!readOnly && (
+        {!readOnly && (step === "md5计算" || step === "上传中") && (
           <Box display="flex" alignItems="center" className="s3-uploader-item-progress">
             {step === "md5计算" ? (
               <LinearProgress
@@ -329,6 +378,34 @@ export const UploadFileItem = ({
               <IconChecks color={antdColor.success} />
             </IconButton>
           )}
+          {step === "文件校验" && (
+            <Box sx={{ position: "relative" }} className="s3-uploader-item-action">
+              <IconButton
+                title={item.err || "文件校验失败"}
+                size="small"
+                sx={{
+                  zIndex: 100,
+                  p: 0.25,
+                }}
+              >
+                <IconMinus color={antdColor.warning} />
+                <CircularProgress
+                  size={36}
+                  variant="determinate"
+                  value={100}
+                  sx={{
+                    color: antdColor.warning,
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    marginTop: "-18px",
+                    marginLeft: "-18px",
+                    zIndex: 0,
+                  }}
+                />
+              </IconButton>
+            </Box>
+          )}
           {step === "md5计算" && !!item.file && (
             <Box sx={{ position: "relative" }} className="s3-uploader-item-action">
               <IconButton
@@ -337,7 +414,7 @@ export const UploadFileItem = ({
                 sx={{
                   zIndex: 100,
                   p: 0.25,
-                  border: item.err ? `2px solid ${antdColor.error}` : undefined,
+                  border: item.err ? `2px solid ${antdColor.warning}` : undefined,
                 }}
               >
                 <IconLockSearch color={item.err ? antdColor.warning : antdColor.blue3} />
@@ -368,20 +445,20 @@ export const UploadFileItem = ({
               >
                 <IconPrescription color={item.errType === "preUpload" ? antdColor.warning : antdColor.cyan} />
               </IconButton>
-              {!item.err && (
-                <CircularProgress
-                  size={36}
-                  sx={{
-                    color: antdColor.cyan,
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    marginTop: "-18px",
-                    marginLeft: "-18px",
-                    zIndex: 0,
-                  }}
-                />
-              )}
+              <CircularProgress
+                size={36}
+                variant={item.err ? "determinate" : "indeterminate"}
+                value={100}
+                sx={{
+                  color: item.err ? antdColor.warning : antdColor.cyan,
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  marginTop: "-18px",
+                  marginLeft: "-18px",
+                  zIndex: 0,
+                }}
+              />
             </Box>
           )}
           {step === "上传中" && (
@@ -414,6 +491,27 @@ export const UploadFileItem = ({
                   }}
                 />
               )}
+            </Box>
+          )}
+          {step === "文件合并" && (
+            <Box sx={{ position: "relative" }} className="s3-uploader-item-action">
+              <IconButton size="small" title={item.err || "文件合并中"} sx={{ zIndex: 100, p: 0.25 }}>
+                <IconFileZip color={error ? antdColor.warning : antdColor.purple} />
+              </IconButton>
+              <CircularProgress
+                size={36}
+                value={100}
+                variant={error ? "determinate" : "indeterminate"}
+                sx={{
+                  color: antdColor.purple,
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  marginTop: "-18px",
+                  marginLeft: "-18px",
+                  zIndex: 0,
+                }}
+              />
             </Box>
           )}
           <IconButton title="移除" onClick={removeFile} sx={{ zIndex: 100 }}>

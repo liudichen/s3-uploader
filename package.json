@@ -1,6 +1,6 @@
 {
   "name": "@iimm/s3-uploader",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "s3-uploader react component",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -13,11 +13,18 @@
   "keywords": [
     "react component",
     "mui",
-    "s3-uploader"
+    "s3-uploader",
+    "multipartUpload"
   ],
-  "authors": [
-    "liudichen@foxmail.com"
-  ],
+  "repository": {
+    "url": "https://github.com/liudichen/s3-uploader.git",
+    "type": "https"
+  },
+  "author": {
+    "name": "liudichen",
+    "url": "http://www.iimm.ink",
+    "email": "liudichen@foxmail.com"
+  },
   "license": "MIT",
   "files": [
     "dist",
@@ -36,6 +43,8 @@
     "typescript": "^5.4.2"
   },
   "peerDependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
     "@mui/material": "^5.15.11",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"

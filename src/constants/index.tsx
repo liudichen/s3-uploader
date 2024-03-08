@@ -1,15 +1,5 @@
 import axios from "axios";
 import SparkMD5 from "spark-md5";
-import {
-  IconExcelColorful,
-  IconFileColorful,
-  IconImageColorful,
-  IconPdfColorful,
-  IconPptColorful,
-  IconVideoColorful,
-  IconWordColorful,
-  IconZipColorful,
-} from "@iimm/icons";
 
 import type {
   S3PartUploadRequestFn,
@@ -19,7 +9,6 @@ import type {
   S3CompleteUploadResponse,
   S3AbortUploadRequestFn,
   Md5GetterOptions,
-  FileIconRender,
   IsSameFileFn,
 } from "../interface";
 
@@ -220,33 +209,6 @@ export const md5GetterFn = async (file: File, options?: Md5GetterOptions) => {
   });
 
   return res;
-};
-
-export const fileIconRenderFn: FileIconRender = (file) => {
-  const { name: fileName, type: fileType = "" } = file;
-
-  let Icon = IconFileColorful;
-
-  if (fileType && (fileType.startsWith("image/") || fileType.startsWith("video/"))) {
-    Icon = fileType.startsWith("image/") ? IconImageColorful : IconVideoColorful;
-  } else {
-    const ext = fileName.slice(fileName.lastIndexOf(".") + 1).toLowerCase();
-    if (ext) {
-      if (ext === "pdf") {
-        Icon = IconPdfColorful;
-      } else if (["doc", "docx", "wps", "wpt"].includes(ext)) {
-        Icon = IconWordColorful;
-      } else if (["xls", "xlsx", "et", "ett", "csv"].includes(ext)) {
-        Icon = IconExcelColorful;
-      } else if (["ppt", "pptx"].includes(ext)) {
-        Icon = IconPptColorful;
-      } else if (["zip", "rar", "7z", "tar"].includes(ext)) {
-        Icon = IconZipColorful;
-      }
-    }
-  }
-
-  return <Icon size={24} />;
 };
 
 export const isSameFileFn: IsSameFileFn = (a, b) =>
