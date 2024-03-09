@@ -25,6 +25,7 @@ export const S3Uploader = (props: S3UploaderProps) => {
     meta,
     uploader,
     uploaderName,
+    chunkSize = 5242880,
     limit = 3,
     chunkWaitTime = 1000,
     fileChecker,
@@ -198,6 +199,7 @@ export const S3Uploader = (props: S3UploaderProps) => {
           selectable={selectable}
           preview={preview}
           PreviewRender={PreviewRender}
+          chunkSize={chunkSize}
         />
       ))}
     </Stack>

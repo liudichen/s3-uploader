@@ -25,14 +25,13 @@ import { antdColor } from "../constants";
 import { InnerFileIconRender } from "../components";
 import type { FileUploadStep, S3PreUploadPart, UploadFileItemProps } from "../interface";
 
-const chunkSize = 5 * 1024 * 1024;
-
 interface UploadPartTempFields {
   p?: number;
   err?: string;
 }
 
 export const UploadFileItem = ({
+  chunkSize = 5242880,
   className,
   i,
   item,
@@ -155,7 +154,11 @@ export const UploadFileItem = ({
       doneRef.current = res.done;
 
       doingRef.current = false;
-      onItemChange(i, "update", { ...item, ...res, err: "", errType: undefined });
+      const newItem = { ...item, ...res, err: "", errType: undefined };
+      if (!res.done && !newItem.count) {
+        newItem.count = Math.ceil(item.size / chunkSize);
+      }
+      onItemChange(i, "update", newItem);
       if (!res.done) {
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
         setStep("上传中");

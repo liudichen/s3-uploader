@@ -88,9 +88,9 @@ export interface UploadFile {
   type?: string;
   /** 文件上传或校验过程的错误文本 */
   err?: string;
-  /** 错误阶段 */
+  /** 错误类型,揭示哪个阶段发生了错误 */
   errType?: "validate" | "md5" | "preUpload" | "completeUpload" | "partUpload";
-  /** 已上传完毕 */
+  /** 已上传完毕? */
   done?: boolean;
   md5?: string;
   /** 文件上传任务的数据库表id */
@@ -99,11 +99,11 @@ export interface UploadFile {
   uploadId?: string;
   /**文件大小,即 File.size */
   size: number;
-  /**分片总数量,仅文件之前未完整上传时有 */
+  /**分片总数量,仅文件之前未完整上传时有(可选) */
   count?: number;
   /** 服务器中在本次上传前已存在上传完成的文件?*/
   exist?: boolean;
-  /** 后端返回分片上传任务,done=true时会被清空 */
+  /** 后端返回分片上传任务(如果有任务则会完整返回PartNumber从1到Math.ceil(size/chunkSize)所有分片的任务信息,未完成的会有直接上传的url),done=true时会被清空 */
   parts?: S3PreUploadPart[];
   /**文件是否被选择,当开启了文件选择时有意义
    * @default false
@@ -190,7 +190,7 @@ export interface S3UploaderProps
 }
 
 export interface Md5GetterOptions {
-  /**每次读取的文件切片大小
+  /**计算md5时每次读取的文件切片大小
    * @default 4194304='4M'
    */
   chunkSize?: number;
@@ -218,6 +218,10 @@ export interface FileIconRenderProps {
 export type IsSameFileFn = (a: File, b?: File) => boolean;
 
 interface S3RelateItemProps {
+  /**分片上传的分片大小,minio默认为5M
+   * @default 5242880='5M'
+   */
+  chunkSize?: number;
   /** 文件可预览? */
   preview?: boolean;
   /**预览文件的组件(推荐是弹窗之类不占用文档流) */
@@ -249,7 +253,7 @@ interface S3RelateItemProps {
   s3PartUploadRequest?: S3PartUploadRequestFn;
   /** 当所有分片上传后通知服务进行分片合并的请求 */
   s3CompleteUploadRequest?: S3CompleteUploadRequestFn;
-  /** 取消分片上传任务的请求，当前并没有去实现 */
+  /** 取消分片上传任务的请求，当前并没有去实现,采用的是任务设置失效时间的方式 */
   s3AbortUploadRequest?: S3AbortUploadRequestFn;
 
   /**当返回0时表示md5在计算过程中手动终止,false表示出错了 */
@@ -269,13 +273,13 @@ interface S3RelateItemProps {
    * @default 3
    */
   limit?: number;
-  /**分片上传后端返回的url的转换函数 */
+  /** 请求及请求返回的url地址在请求前或存进value前的转换函数,如果不传或没有返回值，则使用原始值 */
   urlConvert?: UrlConvertFn;
   /**达到并发限制时,等待多少ms再次进行检查是否达到并发数量限制
    * @default 1000
    */
   chunkWaitTime?: number;
-  /**文件上传的额外MetaData */
+  /**文件上传的额外的s3 MetaData */
   meta?: Record<string, number | string>;
   uploader?: string;
   uploaderName?: string;
