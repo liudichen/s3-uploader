@@ -257,26 +257,26 @@ export const UploadFileItem = ({
 
         uploadingPartsRef.current.push(partsRef.current[i]);
 
-        partsRef.current[PartNumber - 1].err = "";
+        partsRef.current[i].err = "";
 
         s3PartUploadRequest!(url!, item.file!.slice(start, end), {
           baseURL,
           timeout,
           urlConvert,
           onUploadProgress(e) {
-            partsRef.current[PartNumber - 1].p = Math.floor((e.loaded * 100) / Size);
+            partsRef.current[i].p = Math.floor((e.loaded * 100) / Size);
             forceUpdate();
           },
         })
           .then(async () => {
-            partsRef.current[PartNumber - 1].err = "";
-            partsRef.current[PartNumber - 1].done = 1;
+            partsRef.current[i].err = "";
+            partsRef.current[i].done = 1;
             await checkAndCompleteUpload();
           })
           .catch((reason: any) => {
             const err = `上传分片-${PartNumber}出错`;
             console.log(`${item?.file?.name}-${PartNumber}-PartUploadFail:`, reason);
-            partsRef.current[PartNumber - 1].err = err;
+            partsRef.current[i].err = err;
             uploadFailRef.current = true;
             onItemChange(i, "update", { ...item, err, errType: "partUpload" });
           })
