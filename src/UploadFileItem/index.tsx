@@ -91,8 +91,8 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
     if (step === "上传中") {
       const newPause = typeof pause === "boolean" ? pause : !pauseRef.current;
       if (!newPause && uploadFailRef) {
-        onItemChange(i, "update", { ...item, err: "", errType: undefined });
         uploadFailRef.current = false;
+        onItemChange(i, "update", { ...item, err: "", errType: undefined });
       }
       pauseRef.current = newPause;
       setPause(newPause);
@@ -161,10 +161,10 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
       } else {
         newItem.step = "完成";
       }
-      onItemChange(i, "update", newItem);
       if (!res.done) {
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
       }
+      onItemChange(i, "update", newItem);
     } catch (error) {
       console.log(`${item.name}-preUploadErr`, error);
       onItemChange(i, "update", { ...item, err: "上传初始化失败", errType: "preUpload" });
