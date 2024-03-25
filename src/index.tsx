@@ -91,13 +91,21 @@ export const S3Uploader = (props: S3UploaderProps) => {
         }
       }
 
-      const item: UploadFile = { file, size: file.size, name: file.name, type: file.type, checked: false };
+      const item: UploadFile = {
+        file,
+        size: file.size,
+        name: file.name,
+        type: file.type,
+        checked: false,
+        step: "md5计算",
+      };
 
       if (fileChecker) {
         const checkResultErrMsg = await fileChecker(file);
         if (checkResultErrMsg) {
           item.err = checkResultErrMsg;
           item.errType = "validate";
+          item.step = "文件校验";
         }
       }
 

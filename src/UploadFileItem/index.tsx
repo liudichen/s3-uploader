@@ -23,7 +23,7 @@ import {
 
 import { antdColor } from "../constants";
 import { InnerFileIconRender } from "../components";
-import type { FileUploadStep, S3PreUploadPart, UploadFileItemProps } from "../interface";
+import type { S3PreUploadPart, UploadFileItemProps } from "../interface";
 
 interface UploadPartTempFields {
   p?: number;
@@ -73,7 +73,7 @@ export const UploadFileItem = ({
   const uploadingPartsRef = useRef<(S3PreUploadPart & UploadPartTempFields)[]>([]);
   const forceUpdate = useUpdate();
   const uploadFailRef = useRef(false);
-  const [step, setStep] = useSafeState<FileUploadStep>(!item.md5 ? "md5计算" : item.done ? "完成" : "文件校验");
+  const step = item?.step || "完成";
 
   const stepRef = useLatest(step);
 
@@ -122,8 +122,7 @@ export const UploadFileItem = ({
     if (md5 === false) {
       onItemChange(i, "update", { ...item, err: "计算文件校验和失败", errType: "md5" });
     } else if (typeof md5 === "string") {
-      onItemChange(i, "update", { ...item, md5, err: "", errType: undefined });
-      setStep("初始化");
+      onItemChange(i, "update", { ...item, md5, err: "", errType: undefined, step: "初始化" });
     }
   });
 
@@ -158,12 +157,14 @@ export const UploadFileItem = ({
       if (!res.done && !newItem.count) {
         newItem.count = Math.ceil(item.size / chunkSize);
       }
+      if (!res.done) {
+        newItem.step = "上传中";
+      } else {
+        newItem.step = "完成";
+      }
       onItemChange(i, "update", newItem);
       if (!res.done) {
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
-        setStep("上传中");
-      } else {
-        setStep("完成");
       }
     } catch (error) {
       doingRef.current = false;
@@ -179,7 +180,7 @@ export const UploadFileItem = ({
 
     if (!allDone) return;
     doingRef.current = false;
-    setStep("文件合并");
+    onItemChange(i, "update", { ...item, step: "文件合并" });
   });
 
   const completeUpload = useMemoizedFn(async () => {
@@ -205,8 +206,8 @@ export const UploadFileItem = ({
       delete newItem.errType;
       partsRef.current = [];
       uploadingPartsRef.current = [];
+      newItem.step = "完成";
       onItemChange(i, "update", newItem);
-      setStep("完成");
     } catch (error) {
       console.log("completeUploadErr", error);
       const err = "上传后文件合并出错";
@@ -298,7 +299,7 @@ export const UploadFileItem = ({
     } else if (step === "文件合并") {
       completeUpload();
     }
-  }, [step, item]);
+  }, [step]);
 
   return (
     <Box

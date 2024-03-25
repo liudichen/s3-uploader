@@ -117,6 +117,7 @@ export interface UploadFile {
   VersionId?: string;
   /** 当成功时返回的在s3中的临时访问url */
   url?: string;
+  step?: FileUploadStep;
 }
 
 export type OnItemChangeFn = (
