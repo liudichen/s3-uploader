@@ -128,7 +128,7 @@ export const UploadFileItem = ({
   });
 
   const preUpload = useMemoizedFn(async () => {
-    if (readOnly || item.uploadId) {
+    if (readOnly || item.uploadId || !item.md5) {
       return;
     }
 
@@ -298,7 +298,7 @@ export const UploadFileItem = ({
     } else if (step === "文件合并") {
       completeUpload();
     }
-  }, [step]);
+  }, [step, item]);
 
   return (
     <Box
@@ -443,7 +443,7 @@ export const UploadFileItem = ({
             <Box sx={{ position: "relative" }} className="s3-uploader-item-action">
               <IconButton
                 size="small"
-                onClick={() => console.log(Date.now())}
+                onClick={preUpload}
                 title={`上传初始化中,初始化上传任务...${item.err ? `(Error-${item.err})` : ""}`}
                 sx={{ zIndex: 100, p: 0.25 }}
               >
