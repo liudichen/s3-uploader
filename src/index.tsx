@@ -1,3 +1,4 @@
+import { flushSync } from "react-dom";
 import { useControllableValue, useMemoizedFn } from "ahooks";
 import { Stack } from "@mui/material";
 import type { DropzoneOptions } from "react-dropzone";
@@ -125,34 +126,33 @@ export const S3Uploader = (props: S3UploaderProps) => {
   });
 
   const onItemChange: OnItemChangeFn = useMemoizedFn((i, task, newItem) => {
-    const newValue = [...(value || [])];
-    if (task === "delete") {
-      newValue.splice(i, 1);
-    } else if (task === "select") {
-      const checked = !newValue[i].checked;
-      newValue[i].checked = checked;
-      if (selectType === "single" && checked) {
-        newValue.map((_, index) => {
-          if (index !== i) {
-            newValue[index].checked = false;
+    flushSync(() => {
+      if (task === "delete") {
+        setValue((st) => {
+          const newValue = [...(st || [])];
+          newValue.splice(i, 1);
+          return newValue;
+        });
+      } else if (task === "select") {
+        setValue((st) => {
+          const newValue = [...(st || [])];
+          const checked = !newValue[i].checked;
+          newValue[i].checked = checked;
+          if (checked && selectType === "single") {
+            for (let j = 0; j < newValue.length; j++) {
+              if (j !== i) newValue[j].checked = false;
+            }
           }
-          return null;
+          return newValue;
+        });
+      } else {
+        setValue((st) => {
+          const newValue = [...(st || [])];
+          newValue[i] = newItem!;
+          return newValue;
         });
       }
-    } else if (newItem?.md5) {
-      const index = newValue.findIndex(
-        (ele) => ele.md5 === newItem.md5 || (newItem.name === ele.name && newItem.size === ele.size)
-      );
-      if (index === -1) return;
-      if (newValue.some((ele, index) => ele.md5 === newItem.md5 && index !== i)) {
-        newValue.splice(i, 1);
-      } else {
-        newValue[i] = newItem;
-      }
-    } else {
-      newValue[i] = newItem!;
-    }
-    setValue(newValue);
+    });
   });
 
   return (

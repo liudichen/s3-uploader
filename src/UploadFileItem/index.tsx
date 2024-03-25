@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { useLatest, useMemoizedFn, useSafeState, useUpdate } from "ahooks";
 import {
   Box,
@@ -30,37 +30,38 @@ interface UploadPartTempFields {
   err?: string;
 }
 
-export const UploadFileItem = ({
-  chunkSize = 5242880,
-  className,
-  i,
-  item,
-  limit,
-  onItemChange,
-  readOnly,
-  meta,
-  uploader,
-  uploaderName,
-  chunkWaitTime,
-  s3AbortUploadRequest,
-  s3CompleteUploadRequest,
-  s3PartUploadRequest,
-  s3PreUploadRequest,
-  s3CompleteUploadUrl,
-  s3PreUploadUrl,
-  urlConvert,
-  FileIconRender = InnerFileIconRender,
-  md5Getter,
-  baseURL,
-  timeout,
-  platform,
-  app,
-  bucket,
-  filePrefix,
-  selectable,
-  preview,
-  PreviewRender,
-}: UploadFileItemProps) => {
+export const UploadFileItem = memo((props: UploadFileItemProps) => {
+  const {
+    chunkSize = 5242880,
+    className,
+    i,
+    item,
+    limit,
+    onItemChange,
+    readOnly,
+    meta,
+    uploader,
+    uploaderName,
+    chunkWaitTime,
+    s3AbortUploadRequest,
+    s3CompleteUploadRequest,
+    s3PartUploadRequest,
+    s3PreUploadRequest,
+    s3CompleteUploadUrl,
+    s3PreUploadUrl,
+    urlConvert,
+    FileIconRender = InnerFileIconRender,
+    md5Getter,
+    baseURL,
+    timeout,
+    platform,
+    app,
+    bucket,
+    filePrefix,
+    selectable,
+    preview,
+    PreviewRender,
+  } = props;
   const md5AbortRef = useRef(false);
   /**是否全部完成 */
   const doneRef = useRef(item.done);
@@ -106,9 +107,9 @@ export const UploadFileItem = ({
   });
 
   const computeMd5 = useMemoizedFn(async () => {
-    if (readOnly || doingRef.current || (item.err && item.errType === "validate") || item.md5 || !item.file) return;
-
-    doingRef.current = true;
+    if (readOnly || (item.err && item.errType === "validate") || item.md5 || !item.file) {
+      return;
+    }
 
     const md5 = await md5Getter!(item.file, {
       abortRef: md5AbortRef,
@@ -120,19 +121,18 @@ export const UploadFileItem = ({
 
     doneRef.current = false;
     if (md5 === false) {
-      onItemChange(i, "update", { ...item, err: "计算文件校验和失败", errType: "md5" });
+      onItemChange(i, "update", { ...item, err: "计算文件校验和失败", errType: "md5", step: "md5计算" });
     } else if (typeof md5 === "string") {
       onItemChange(i, "update", { ...item, md5, err: "", errType: undefined, step: "初始化" });
     }
   });
 
   const preUpload = useMemoizedFn(async () => {
-    if (readOnly || item.uploadId || !item.md5 || doingRef.current) {
+    if (readOnly || item.uploadId || !item.md5) {
       return;
     }
 
     try {
-      doingRef.current = true;
       const res = await s3PreUploadRequest!(
         s3PreUploadUrl,
         {
@@ -152,7 +152,6 @@ export const UploadFileItem = ({
       );
       doneRef.current = res.done;
 
-      doingRef.current = false;
       const newItem = { ...item, ...res, err: "", errType: undefined };
       if (!res.done && !newItem.count) {
         newItem.count = Math.ceil(item.size / chunkSize);
@@ -167,7 +166,6 @@ export const UploadFileItem = ({
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
       }
     } catch (error) {
-      doingRef.current = false;
       console.log(`${item.name}-preUploadErr`, error);
       onItemChange(i, "update", { ...item, err: "上传初始化失败", errType: "preUpload" });
     }
@@ -526,4 +524,4 @@ export const UploadFileItem = ({
       )}
     </Box>
   );
-};
+});
