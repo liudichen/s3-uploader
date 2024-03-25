@@ -128,7 +128,7 @@ export const UploadFileItem = ({
   });
 
   const preUpload = useMemoizedFn(async () => {
-    if (readOnly || item.uploadId || !item.md5) {
+    if (readOnly || item.uploadId || !item.md5 || doingRef.current) {
       return;
     }
 
