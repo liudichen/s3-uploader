@@ -1,6 +1,6 @@
 {
   "name": "@iimm/s3-uploader",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "s3-uploader react component",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
