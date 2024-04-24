@@ -1,3 +1,5 @@
+"use client";
+
 import { useCreation, useSafeState } from "ahooks";
 import { Box } from "@mui/material";
 import {

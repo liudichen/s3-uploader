@@ -211,5 +211,4 @@ export const md5GetterFn = async (file: File, options?: Md5GetterOptions) => {
   return res;
 };
 
-export const isSameFileFn: IsSameFileFn = (a, b) =>
-  !!a && (a === b || (a.size === b?.size && a.name === b.name && a.lastModified === b.lastModified));
+export const isSameFileFn: IsSameFileFn = (a, b) => !!a && (a === b || (a.size === b?.size && a.name === b.name));

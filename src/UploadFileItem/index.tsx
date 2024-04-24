@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useEffect, useRef } from "react";
 import { useLatest, useMemoizedFn, useSafeState, useUpdate } from "ahooks";
 import {
@@ -165,9 +167,10 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
         partsRef.current = res.parts!.map((ele) => ({ ...ele, p: ele.done ? 100 : 0 }));
       }
       onItemChange(i, "update", newItem);
-    } catch (error) {
+    } catch (error: any) {
       console.log(`${item.name}-preUploadErr`, error);
-      onItemChange(i, "update", { ...item, err: "上传初始化失败", errType: "preUpload" });
+      const errMsg = error?.message?.toString?.();
+      onItemChange(i, "update", { ...item, err: `上传初始化失败${errMsg ? `-${errMsg}` : ""}`, errType: "preUpload" });
     }
   });
 
@@ -206,11 +209,15 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
       uploadingPartsRef.current = [];
       newItem.step = "完成";
       onItemChange(i, "update", newItem);
-    } catch (error) {
+    } catch (error: any) {
       console.log("completeUploadErr", error);
-      const err = "上传后文件合并出错";
+      const errMsg = error?.message?.toString?.();
       uploadFailRef.current = true;
-      onItemChange(i, "update", { ...item, err, errType: "completeUpload" });
+      onItemChange(i, "update", {
+        ...item,
+        err: `上传后文件合并出错${errMsg ? `-${errMsg}` : ""}`,
+        errType: "completeUpload",
+      });
     }
   });
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { type RefObject, type PropsWithChildren, forwardRef, useImperativeHandle } from "react";
 import { useDropzone, type DropzoneOptions } from "react-dropzone";
 

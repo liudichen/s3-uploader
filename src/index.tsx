@@ -1,3 +1,5 @@
+"use client";
+
 import { flushSync } from "react-dom";
 import { useControllableValue, useMemoizedFn } from "ahooks";
 import { Stack } from "@mui/material";
@@ -122,7 +124,9 @@ export const S3Uploader = (props: S3UploaderProps) => {
     const newValue = [...(rawFiles || [])];
     newValue.push(...(maxFiles ? newFiles.slice(0, maxFiles - rawCount) : newFiles));
 
-    setValue(newValue);
+    flushSync(() => {
+      setValue(newValue);
+    });
   });
 
   const onItemChange: OnItemChangeFn = useMemoizedFn((i, task, newItem) => {

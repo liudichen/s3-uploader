@@ -1,6 +1,6 @@
 {
   "name": "@iimm/s3-uploader",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "s3-uploader react component",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -35,13 +35,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/react": "^18.2.69",
-    "@types/react-dom": "^18.2.22",
+    "@types/react": "^18.2.79",
+    "@types/react-dom": "^18.2.25",
     "@types/spark-md5": "^3.0.4",
     "father": "^4.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.5"
   },
   "peerDependencies": {
     "@emotion/react": "^11.11.4",
@@ -53,7 +53,7 @@
   "dependencies": {
     "@iimm/icons": "^1.1.0",
     "@tabler/icons-react": "^2.47.0",
-    "ahooks": "^3.7.10",
+    "ahooks": "^3.7.11",
     "axios": "^1.6.8",
     "react-dropzone": "^14.2.3",
     "spark-md5": "^3.0.2"
