@@ -35,17 +35,17 @@ export const InnerFileIconRender = ({ item, preview, PreviewRender }: FileIconRe
       Icon = IconVideoColorful;
     }
   } else {
-    const ext = fileName.slice(fileName.lastIndexOf(".") + 1).toLowerCase();
+    const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
     if (ext) {
-      if (["pdf", "odf"].includes(ext)) {
+      if ([".pdf", ".odf"].includes(ext)) {
         Icon = IconPdfColorful;
-      } else if (["doc", "docx", "wps", "wpt"].includes(ext)) {
+      } else if ([".doc", ".docx", ".wps", ".wpt"].includes(ext)) {
         Icon = IconWordColorful;
-      } else if (["xls", "xlsx", "et", "ett", "csv"].includes(ext)) {
+      } else if ([".xls", ".xlsx", ".et", ".ett", ".csv"].includes(ext)) {
         Icon = IconExcelColorful;
-      } else if (["ppt", "pptx"].includes(ext)) {
+      } else if ([".ppt", ".pptx"].includes(ext)) {
         Icon = IconPptColorful;
-      } else if (["zip", "rar", "7z", "tar"].includes(ext)) {
+      } else if ([".zip", ".rar", ".7z", ".tar"].includes(ext)) {
         Icon = IconZipColorful;
       }
     }
