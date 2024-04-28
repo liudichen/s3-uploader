@@ -1,6 +1,6 @@
 {
   "name": "@iimm/s3-uploader",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "s3-uploader react component",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -47,8 +47,8 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
     "@mui/material": "^5.15.11",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "dependencies": {
     "@iimm/icons": "^1.1.0",

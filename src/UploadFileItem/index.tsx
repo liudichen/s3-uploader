@@ -279,8 +279,9 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
             partsRef.current[i].done = 1;
             await checkAndCompleteUpload();
           })
-          .catch((reason: any) => {
-            const err = `上传分片-${PartNumber}出错`;
+          .catch((reason: Error) => {
+            const errMsg = reason?.message?.toString?.();
+            const err = `上传分片-${PartNumber}出错${errMsg ? `(${errMsg})` : ""}`;
             console.log(`${item?.file?.name}-${PartNumber}-PartUploadFail:`, reason);
             partsRef.current[i].err = err;
             uploadFailRef.current = true;
