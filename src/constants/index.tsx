@@ -156,10 +156,11 @@ export const s3AbortUploadRequestFn: S3AbortUploadRequestFn = (url, data, option
 };
 
 //4M
-const defaultChunkSize = 1024 * 1024 * 4;
+const defaultMd5ChunkSize = 1024 * 1024 * 4;
+export const defaultMaxDirectFileSize = defaultMd5ChunkSize;
 
 export const md5GetterFn = async (file: File, options?: Md5GetterOptions) => {
-  const { chunkSize = defaultChunkSize, abortRef, onprogress, onerror } = options || {};
+  const { chunkSize = defaultMd5ChunkSize, abortRef, onprogress, onerror } = options || {};
 
   const res = await new Promise<string | 0 | false>((resolve) => {
     const chunks = Math.ceil(file.size / chunkSize);

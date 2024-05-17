@@ -3,9 +3,11 @@
 [![NPM version](https://img.shields.io/npm/v/@iimm/s3-uploader.svg?style=flat)](https://npmjs.org/package/@iimm/s3-uploader)
 [![NPM downloads](http://img.shields.io/npm/dm/@iimm/s3-uploader.svg?style=flat)](https://npmjs.org/package/@iimm/s3-uploader)
 
-学习阶段自定义的尝试用来进行本地minio s3 分片（分片默认大小是为5M）上传的react组件；使用了mui ahooks tabler-icons等，支持并发分片上传和断点续传(需后端支持),为了安全起见,除了分片上传阶段,不会与s3服务器直接交互,分片上传阶段的直接交互应使用临时授权的preSignedUrl。当然可以通过传入自定义的s3PreUploadRequest、s3PartUploadRequest、s3CompleteUploadRequest等来实现自定义方式。
+学习阶段自定义的尝试用来进行本地minio s3 分片（分片默认大小是为`5M`）上传的react组件；使用了mui ahooks tabler-icons等，支持并发分片上传和断点续传(需后端支持),为了安全起见,除了分片上传阶段,不会与s3服务器直接交互,分片上传阶段的直接交互应使用临时授权的preSignedUrl。当然可以通过传入自定义的s3PreUploadRequest、s3PartUploadRequest、s3CompleteUploadRequest等来实现自定义方式。
 
-## 文件上传流程
+## 文件分片上传流程
+
+默认情况下是分片上传：
 
 文件校验(validate,使用fileCheck和isSameFile进行检查) => md5计算 => 初始化(preUpload,与后端交互) => 分片上传(partUpload,直接上传到s3服务器) => 合并文件(completeUpload,与后端交互) => 完成 
 
@@ -18,6 +20,12 @@
 注意：返回的分片任务是完整的PartNumber从1到Math.ceil(size/chunkSize)的任务信息
 
 分片上传阶段会并发（默认为3）发起分片上传（允许暂停），全部完成后通知后端，后端会通知s3服务器合并,完成后后端返回url等信息
+
+## 文件直接上传
+
+当`directUpload`=`true`时，在文件大小不大于`directUploadMaxSize`(默认值为`4M`)会跳过分片上传和合并文件阶段。
+
+文件校验(validate,使用fileCheck和isSameFile进行检查) => md5计算 => 初始化(preUpload,与后端交互,同时完成文件上传) => 完成 
 
 ## 效果图
 
@@ -76,6 +84,15 @@ interface UploadFile {
 
 ```typescript
 interface S3RelateItemProps {
+  /** 启用直接上传?(file.szie小于等于directUploadMaxSize)
+   * @default false
+   */
+  directUpload?: boolean;
+  /**
+   * 直接上传最大文件大小
+   * @default 1194304='4M'
+   */
+  directUploadMaxSize?: number;
   /**分片上传的分片大小,minio默认为5M
    * @default 5242880='5M'
    */

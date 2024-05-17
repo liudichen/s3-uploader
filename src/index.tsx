@@ -7,6 +7,7 @@ import type { DropzoneOptions } from "react-dropzone";
 
 import {
   antdColor,
+  defaultMaxDirectFileSize,
   isSameFileFn,
   md5GetterFn,
   s3AbortUploadRequestFn,
@@ -62,6 +63,8 @@ export const S3Uploader = (props: S3UploaderProps) => {
     selectable,
     preview,
     PreviewRender,
+    directUpload = false,
+    directUploadMaxSize = defaultMaxDirectFileSize,
     ...restProps
   } = props;
 
@@ -212,6 +215,8 @@ export const S3Uploader = (props: S3UploaderProps) => {
           preview={preview}
           PreviewRender={PreviewRender}
           chunkSize={chunkSize}
+          directUpload={directUpload}
+          directUploadMaxSize={directUploadMaxSize}
         />
       ))}
     </Stack>

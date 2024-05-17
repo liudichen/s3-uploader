@@ -139,7 +139,7 @@ interface RequestionOptions extends Omit<AxiosRequestConfig, "data" | "url"> {
 
 export type S3PreUploadRequestFn = (
   url: string,
-  data: S3PreUploadData,
+  data: FormData,
   options?: RequestionOptions
 ) => Promise<S3PreUploadResponse>;
 
@@ -219,6 +219,15 @@ export interface FileIconRenderProps {
 export type IsSameFileFn = (a: File, b?: File) => boolean;
 
 interface S3RelateItemProps {
+  /** 启用直接上传?(file.szie小于等于directUploadMaxSize)
+   * @default false
+   */
+  directUpload?: boolean;
+  /**
+   * 直接上传最大文件大小
+   * @default 1194304='4M'
+   */
+  directUploadMaxSize?: number;
   /**分片上传的分片大小,minio默认为5M
    * @default 5242880='5M'
    */

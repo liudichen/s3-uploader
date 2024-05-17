@@ -23,7 +23,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 
-import { antdColor } from "../constants";
+import { antdColor, defaultMaxDirectFileSize } from "../constants";
 import { InnerFileIconRender } from "../components";
 import type { S3PreUploadPart, UploadFileItemProps } from "../interface";
 
@@ -34,6 +34,8 @@ interface UploadPartTempFields {
 
 export const UploadFileItem = memo((props: UploadFileItemProps) => {
   const {
+    directUpload,
+    directUploadMaxSize = defaultMaxDirectFileSize,
     chunkSize = 5242880,
     className,
     i,
@@ -130,28 +132,28 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
   });
 
   const preUpload = useMemoizedFn(async () => {
-    if (readOnly || item.uploadId || !item.md5) {
+    if (readOnly || item.uploadId || !item.md5 || !item?.file?.size) {
       return;
     }
 
+    const data = new FormData();
+    data.append("platform", platform);
+    data.append("fileName", item.file!.name);
+    data.append("md5", item.md5!);
+    if (item.file?.type) data.append("fileType", item.file!.type);
+    data.append("size", item.file!.size as any);
+    if (meta) data.append("meta", JSON.stringify(meta));
+    if (uploader) data.append("uploader", uploader);
+    if (uploaderName) data.append("uploaderName", uploaderName);
+    if (app) data.append("app", app);
+    if (bucket) data.append("bucket", bucket);
+    if (filePrefix) data.append("prefix", filePrefix);
+    if (directUpload && item.file.size <= directUploadMaxSize) {
+      data.append("file", item.file);
+    }
+
     try {
-      const res = await s3PreUploadRequest!(
-        s3PreUploadUrl,
-        {
-          fileName: item.file!.name,
-          md5: item.md5!,
-          fileType: item.file!.type,
-          size: item.file!.size,
-          meta,
-          uploader,
-          uploaderName,
-          platform,
-          app,
-          bucket,
-          prefix: filePrefix,
-        },
-        { baseURL, timeout, urlConvert }
-      );
+      const res = await s3PreUploadRequest!(s3PreUploadUrl, data, { baseURL, timeout, urlConvert });
       doneRef.current = res.done;
 
       const newItem = { ...item, ...res, err: "", errType: undefined };
