@@ -78,7 +78,7 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
   const uploadingPartsRef = useRef<(S3PreUploadPart & UploadPartTempFields)[]>([]);
   const forceUpdate = useUpdate();
   const uploadFailRef = useRef(false);
-  const step = item?.step || "完成";
+  const step = item?.s3 || !item?.step ? "完成" : item.step;
 
   const stepRef = useLatest(step);
 
@@ -383,12 +383,12 @@ export const UploadFileItem = memo((props: UploadFileItemProps) => {
               title="文件已成功上传"
               size="small"
               sx={{
-                border: `2px solid ${antdColor.success}`,
+                border: `2px solid ${item?.s3 ? antdColor.gray6 : antdColor.success}`,
                 p: 0.25,
                 zIndex: 100,
               }}
             >
-              <IconChecks color={antdColor.success} />
+              <IconChecks color={item?.s3 ? antdColor.gray6 : antdColor.success} />
             </IconButton>
           )}
           {step === "文件校验" && (

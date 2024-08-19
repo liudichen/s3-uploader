@@ -95,6 +95,8 @@ export interface UploadFile {
   md5?: string;
   /** 文件上传任务的数据库表id */
   id?: string;
+  /** 文件上传后的归档数据库id */
+  s3?: string;
   /**分片上传任务的s3 UploadId */
   uploadId?: string;
   /**文件大小,即 File.size */
