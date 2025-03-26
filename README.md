@@ -3,7 +3,9 @@
 [![NPM version](https://img.shields.io/npm/v/@iimm/s3-uploader.svg?style=flat)](https://npmjs.org/package/@iimm/s3-uploader)
 [![NPM downloads](http://img.shields.io/npm/dm/@iimm/s3-uploader.svg?style=flat)](https://npmjs.org/package/@iimm/s3-uploader)
 
-学习阶段自定义的尝试用来进行本地minio s3 分片（分片默认大小是为`5M`）上传的react组件；使用了mui ahooks tabler-icons等，支持并发分片上传和断点续传(需后端支持),为了安全起见,除了分片上传阶段,不会与s3服务器直接交互,分片上传阶段的直接交互应使用临时授权的preSignedUrl。当然可以通过传入自定义的s3PreUploadRequest、s3PartUploadRequest、s3CompleteUploadRequest等来实现自定义方式。
+学习阶段自定义的尝试用来进行本地minio s3 分片（分片默认大小是为`5M`）上传的react组件；使用了mui ahooks tabler-icons等，支持并发分片上传和断点续传(需后端支持)。
+
+除了分片上传阶段,不会与s3服务器直接交互,分片上传阶段的直接交互应使用临时授权的preSignedUrl。当然可以通过传入自定义的s3PreUploadRequest、s3PartUploadRequest、s3CompleteUploadRequest等来实现自定义方式。
 
 ## 文件分片上传流程
 
